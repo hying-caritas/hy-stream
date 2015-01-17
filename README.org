@@ -1,0 +1,5 @@
+Just copied from the gray stream implementation in iolib and changed
+it as follow.
+
+- not to set file descriptor to non-block
+- add multiple-thread support
