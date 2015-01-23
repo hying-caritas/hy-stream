@@ -34,15 +34,15 @@
    (eol-finder/no-hang :reader eol-finder/no-hang-of)
    ;; protect input-buffer and unread-index
    (input-lock :initform (make-lock))
-   (input-buffer :initform nil :type (or iobuf null)
-                 :accessor input-buffer-of)
+   (input-buffer :initform nil :type (or iobuf null))
+   (input-buffer-size :type integer)
    ;; Last read char buffer index.
    (unread-index :initform 0 :type buffer-index
                  :accessor unread-index-of)
    ;; protect output-buffer and dirty
    (output-lock :initform (make-lock))
-   (output-buffer :initform nil :type (or iobuf null)
-                  :accessor output-buffer-of)
+   (output-buffer :initform nil :type (or iobuf null))
+   (output-buffer-size :type integer)
    ;; Flag used by stream-force-output.
    (dirty :initform nil :type boolean :accessor dirtyp))
   (:documentation "File descriptor stream"))
@@ -84,3 +84,17 @@
 
 (defgeneric output-buffer-empty-p (stream)
   (:documentation ""))
+
+(defun input-buffer-of (stream)
+  (with-slots (input-buffer input-buffer-size)
+      stream
+    (unless input-buffer
+      (setf input-buffer (allocate-iobuf input-buffer-size)))
+    input-buffer))
+
+(defun output-buffer-of (stream)
+  (with-slots (output-buffer output-buffer-size)
+      stream
+    (unless output-buffer
+      (setf output-buffer (allocate-iobuf output-buffer-size)))
+    output-buffer))

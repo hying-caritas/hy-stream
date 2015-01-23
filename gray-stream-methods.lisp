@@ -33,13 +33,12 @@
         (output-buffer-size (or output-buffer-size +bytes-per-iobuf+)))
    (check-type input-buffer-size buffer-index)
    (check-type output-buffer-size buffer-index)
-   (with-accessors ((ibuf input-buffer-of)
-                    (obuf output-buffer-of)
-                    (ef external-format-of))
+   (with-slots ((ibuf-size input-buffer-size)
+                (obuf-size output-buffer-size))
        stream
-     (setf ibuf (allocate-iobuf input-buffer-size)
-           obuf (allocate-iobuf output-buffer-size)
-           ef external-format))))
+     (setf ibuf-size input-buffer-size
+           obuf-size output-buffer-size))
+   (setf (external-format-of stream) external-format)))
 
 
 ;;;-------------------------------------------------------------------------
@@ -47,14 +46,15 @@
 ;;;-------------------------------------------------------------------------
 
 (defmethod print-object ((o fd-stream) s)
-  (with-slots (fd (ef external-format) (ib input-buffer) (ob output-buffer))
+  (with-slots (fd (ef external-format) (ib input-buffer) (ob output-buffer)
+                  (ib-size input-buffer-size) (ob-size output-buffer-size))
       o
     (print-unreadable-object (o s :type nil :identity t)
       (if fd
           (format s "~A ~S ~S ~S ~S/~S ~S ~S/~S ~S (~S ~S ~S)"
                   (type-of o) :fd fd
-                  :ibuf (iobuf-length ib) (iobuf-size ib)
-                  :obuf (iobuf-length ob) (iobuf-size ob)
+                  :ibuf (if ib (iobuf-length ib) 0) ib-size
+                  :obuf (if ob (iobuf-length ob) 0) ob-size
                   :ef (babel-encodings:enc-name (babel:external-format-encoding ef))
                   :eol-style (babel:external-format-eol-style ef))
           (format s "~A ~A ~S (~S ~S ~S)"
@@ -87,9 +87,9 @@
 ;; TODO: use the buffer pool
 (defmethod close :around ((stream fd-stream) &key abort)
   (when (= (%fd-stream-unref stream) 0)
-    (with-accessors ((ibuf input-buffer-of)
-                     (obuf output-buffer-of)
-                     (fd fd-of))
+    (with-slots ((ibuf input-buffer)
+                 (obuf output-buffer)
+                 fd)
         stream
       (unless (or abort (null ibuf))
         (finish-output stream))
@@ -407,13 +407,17 @@
 ;;;-------------------------------------------------------------------------
 
 (defmethod input-buffer-size ((stream fd-stream))
-  (iobuf-length (input-buffer-of stream)))
+  (with-fd-stream-input-locked stream
+    (iobuf-length (input-buffer-of stream))))
 
 (defmethod input-buffer-empty-p ((stream fd-stream))
-  (iobuf-empty-p (input-buffer-of stream)))
+  (with-fd-stream-input-locked stream
+   (iobuf-empty-p (input-buffer-of stream))))
 
 (defmethod output-buffer-size ((stream fd-stream))
-  (iobuf-length (output-buffer-of stream)))
+  (with-fd-stream-output-locked stream
+   (iobuf-length (output-buffer-of stream))))
 
 (defmethod output-buffer-empty-p ((stream fd-stream))
-  (iobuf-empty-p (output-buffer-of stream)))
+  (with-fd-stream-output-locked stream
+   (iobuf-empty-p (output-buffer-of stream))))
