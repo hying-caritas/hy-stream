@@ -86,6 +86,7 @@
   (:documentation ""))
 
 (defun input-buffer-of (stream)
+  (declare (type fd-stream stream))
   (with-slots (input-buffer input-buffer-size)
       stream
     (unless input-buffer
@@ -93,6 +94,7 @@
     input-buffer))
 
 (defun output-buffer-of (stream)
+  (declare (type fd-stream stream))
   (with-slots (output-buffer output-buffer-size)
       stream
     (unless output-buffer
