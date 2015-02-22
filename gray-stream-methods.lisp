@@ -91,7 +91,7 @@
                  (obuf output-buffer)
                  fd)
         stream
-      (unless (or abort (null ibuf))
+      (unless (or abort (null obuf))
         (finish-output stream))
       (free-stream-buffers ibuf obuf)
       (setf ibuf nil obuf nil)
