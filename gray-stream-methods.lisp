@@ -86,13 +86,13 @@
 
 ;; TODO: use the buffer pool
 (defmethod close :around ((stream fd-stream) &key abort)
+  (unless (or abort (null (slot-value stream 'output-buffer)))
+    (finish-output stream))
   (when (= (%fd-stream-unref stream) 0)
     (with-slots ((ibuf input-buffer)
                  (obuf output-buffer)
                  fd)
         stream
-      (unless (or abort (null obuf))
-        (finish-output stream))
       (free-stream-buffers ibuf obuf)
       (setf ibuf nil obuf nil)
       (when fd
