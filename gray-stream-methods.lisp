@@ -68,7 +68,7 @@
 ;;;-------------------------------------------------------------------------
 
 (defmethod stream-element-type ((stream fd-stream))
-  '(unsigned-byte 8))
+  'character)
 
 (defun fd-stream-ref (fd-stream)
   (with-fd-stream-locked fd-stream
